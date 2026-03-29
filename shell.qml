@@ -11,17 +11,10 @@ ShellRoot {
         id: sidebarRight
 
         implicitWidth: 450
-        visible: false
-
-        IpcHandler {
-            target: "sidebarRight"
-            function toggle(): void {
-                if (!sidebarRight) {
-                    sidebarRight.opacity = 0;
-                }
-                sidebarRight.visible = !sidebarRight.visible;
-            }
-        }
+        focusable: true
+        color: "transparent"
+        property bool isVisible: false
+        visible: isVisible || animation.running
 
         anchors {
             top: true
@@ -29,49 +22,64 @@ ShellRoot {
             bottom: true
         }
 
-        margins {
-            top: 10
-            bottom: 10
-            right: 10
+        IpcHandler {
+            target: "sidebarRight"
+            function toggle(): void {
+                sidebarRight.isVisible = !sidebarRight.isVisible;
+            }
         }
 
-        // WlrLayershell.layer: WlrLayer.Overlay
+        Item {
+            Layout.rightMargin: 10
+            Layout.topMargin: 10
+            Layout.bottomMargin: 10
 
-        color: "transparent"
-        // implicitWidth: 450
-        focusable: true
-
-        Rectangle {
-            id: sidebarBg
             anchors.fill: parent
-            radius: 15
-            color: "transparent"
-            clip: true
-        }
 
-        ColumnLayout {
-            id: bigRow
-            anchors.fill: parent
-            implicitHeight: parent.height
-            implicitWidth: parent.width - 10
-            spacing: 10
+            opacity: sidebarRight.isVisible ? 1.0 : 0.0
 
-            TopGroup {
-                Layout.alignment: Qt.AlignTop
-                Layout.fillHeight: true
-                Layout.fillWidth: true
+            Behavior on opacity {
+                NumberAnimation {
+                    id: animation
+                    duration: 200
+                    easing.type: Easing.InOutQuad
+                }
             }
 
-            CenterGroup {
-                Layout.alignment: Qt.AlignCenter
-                Layout.fillHeight: true
-                Layout.fillWidth: true
+            // WlrLayershell.layer: WlrLayer.Overlay
+
+            Rectangle {
+                id: sidebarBg
+                anchors.fill: parent
+                radius: 15
+                color: "transparent"
+                clip: true
             }
 
-            BottomGroup {
-                Layout.alignment: Qt.AlignBottom
-                Layout.fillHeight: true
-                Layout.fillWidth: true
+            ColumnLayout {
+                id: bigRow
+                anchors.fill: parent
+                implicitHeight: parent.height
+                implicitWidth: parent.width - 10
+                spacing: 10
+
+                TopGroup {
+                    Layout.alignment: Qt.AlignTop
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                }
+
+                CenterGroup {
+                    Layout.alignment: Qt.AlignCenter
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                }
+
+                BottomGroup {
+                    Layout.alignment: Qt.AlignBottom
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                }
             }
         }
     }
