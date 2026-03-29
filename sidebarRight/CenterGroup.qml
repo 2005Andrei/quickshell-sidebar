@@ -4,7 +4,7 @@ import QtQuick.Controls
 
 Rectangle {
     id: root
-    color: Qt.rgba(103, 105, 124, 0.3)
+    color: Qt.rgba(0, 0, 0, 0.7) //  Qt.rgba(103, 105, 124, 0.3)
     focus: true
     implicitWidth: parent.width
     implicitHeight: 20
@@ -13,7 +13,7 @@ Rectangle {
 
     // colors
     property color taskBorder: Qt.rgba(120 / 255, 130 / 255, 170 / 255, 0.25)// "#e0e0e0"
-    property color lsTaskBg: Qt.rgba(30 / 255, 34 / 255, 48 / 255, 0.22)
+    property color lsTaskBg: Qt.rgba(10, 23, 15, 0.1) //  Qt.rgba(30 / 255, 34 / 255, 48 / 255, 0.22)
     property color ndtaskColor: "white"
     property color dtaskColor: "white"
 
@@ -22,7 +22,7 @@ Rectangle {
     property color btnColor: "white"
     property color btnColorHover: "#2ecc71"
     property color btnPressed: "gray"
-    property color btnSelected: "#0D1321" // #5d5fef
+    property color btnSelected: "#5d5fef" // "#0D1321" 
     property color btnTextColor: "white"
     property color btnTextUnselectedColor: "#8f90a6"
 
@@ -234,12 +234,14 @@ Rectangle {
 
                 TabButton {
                     id: tabBtn1
+
                     implicitHeight: 30
                     text: "Unfinished"
 
                     contentItem: Text {
                         text: tabBtn1.text
                         color: tabBar.currentIndex === 0 ? root.btnTextColor : root.btnTextUnselectedColor
+
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         font.pixelSize: 16
