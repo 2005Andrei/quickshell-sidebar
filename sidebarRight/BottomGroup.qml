@@ -21,7 +21,7 @@ Rectangle {
     property color colOnPrimary: "white"
     property color colSecondaryContainer: "#45475A"
     property color colOnSecondaryContainer: "#CDD6F4"
-    property color colErrorContainer: "#ff3b7c" // this #F38BA8 worked with #89B4FA
+    property color colErrorContainer: "black" // this #F38BA8 worked with #89B4FA
     property color colOnErrorContainer: "white" // #11111B
 
     // button colors

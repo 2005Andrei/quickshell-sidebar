@@ -5,7 +5,7 @@ import QtQuick.Controls
 Rectangle {
     id: root
     color: Qt.rgba(103, 105, 124, 0.3)
-    focus: true // Necessary to capture keyboard events
+    focus: true
     implicitWidth: parent.width
     implicitHeight: 20
     Layout.margins: 5
@@ -95,7 +95,6 @@ Rectangle {
         }
     }
 
-    // Reusable Delegate for the ListViews
     Component {
         id: taskDelegate
         Item {

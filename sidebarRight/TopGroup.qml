@@ -60,33 +60,7 @@ Rectangle {
                         color: "#a6adc8"
                     }
                 }
-
-                // Rectangle {
-                //     id: weatherLine
-                //     Layout.preferredWidth: 40
-                //     Layout.preferredHeight: 2
-                //     Layout.alignment: Qt.AlignVCenter
-                //     color: "#313244"
-                //     radius: 1
-                // }
-                //
-                // Text {
-                //     id: temp
-                //     Layout.leftMargin: -5
-                //     font.pixelSize: 16
-                //     text: "23deg"
-                // }
             }
-
-            // Rectangle {
-            //     id: location
-            //     Layout.topMargin: 2
-            //     implicitWidth: 40
-            //     Text {
-            //         font.weight: Font.Light
-            //         text: "Brasov - get out of there"
-            //     }
-            // }
         }
 
         Item {
