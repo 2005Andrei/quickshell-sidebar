@@ -1,0 +1,5 @@
+*.o
+sync-tasks
+*.a
+*.so
+

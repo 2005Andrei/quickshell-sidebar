@@ -39,6 +39,7 @@ Rectangle {
     property string precipitation: jsonData["precipitation"]
     property string high: jsonData["high"]
     property string low: jsonData["low"]
+    property string icon: jsonData["icon"]
 
     RowLayout {
         anchors.fill: parent
@@ -56,7 +57,7 @@ Rectangle {
                     font.family: "Weather Icons"
                     font.pixelSize: 34
                     color: "#89dceb"
-                    text: "\uf002"
+                    text: root.icon
                     y: 0
 
                     SequentialAnimation on y {
