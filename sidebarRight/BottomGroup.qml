@@ -42,6 +42,7 @@ Rectangle {
 
     property real stopwatchTime: 0
     property bool stopwatchRunning: false
+    property bool showTimeDialog: false
 
     Timer {
         id: pomodoroTimerInternal
@@ -65,6 +66,7 @@ Rectangle {
         onTriggered: root.stopwatchTime += 1
     }
 
+    // keybindings
     Keys.onPressed: event => {
         if ((event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp) && event.modifiers === Qt.NoModifier) {
             if (event.key === Qt.Key_PageDown) {
@@ -88,6 +90,20 @@ Rectangle {
                 root.stopwatchTime = 0;
             }
             event.accepted = true;
+        } else if (event.key === Qt.Key_Escape) {
+            if (timeInput.activeFocus) {
+                root.forceActiveFocus();
+                pomodoroItem.isEditing = false;
+                event.accepted = true;
+            }
+        }
+    }
+
+    TapHandler {
+        onTapped: {
+            if (timeInput.activeFocus) {
+                root.forceActiveFocus();
+            }
         }
     }
 
@@ -281,20 +297,29 @@ Rectangle {
             // ==========================================
             Item {
                 id: pomodoroTab
+
+                TapHandler {
+                    onTapped: {
+                        if (timeInput.activeFocus) {
+                            root.forceActiveFocus();
+                        }
+                    }
+                }
                 ColumnLayout {
                     anchors.centerIn: parent
                     spacing: 30
 
                     Item {
                         Layout.alignment: Qt.AlignHCenter
-                        width: 200
-                        height: 200
+                        implicitWidth: 200
+                        implicitHeight: 200
 
                         Canvas {
                             anchors.fill: parent
                             property real progress: root.pomodoroLapDuration > 0 ? (root.pomodoroSecondsLeft / root.pomodoroLapDuration) : 0
 
                             onProgressChanged: requestPaint()
+
                             onPaint: {
                                 var ctx = getContext("2d");
                                 ctx.clearRect(0, 0, width, height);
@@ -317,16 +342,72 @@ Rectangle {
                             anchors.centerIn: parent
                             spacing: 0
 
-                            Text {
+                            Item {
+                                id: pomodoroItem
                                 Layout.alignment: Qt.AlignHCenter
-                                text: {
-                                    let minutes = Math.floor(root.pomodoroSecondsLeft / 60).toString().padStart(2, '0');
-                                    let seconds = Math.floor(root.pomodoroSecondsLeft % 60).toString().padStart(2, '0');
-                                    return `${minutes}:${seconds}`;
+                                implicitWidth: timeText.implicitWidth
+                                implicitHeight: timeText.implicitHeight
+
+                                property bool isEditing: false
+
+                                Text {
+                                    id: timeText
+                                    Layout.alignment: Qt.AlignHCenter
+                                    visible: !parent.isEditing
+                                    text: {
+                                        let minutes = Math.floor(root.pomodoroSecondsLeft / 60).toString().padStart(2, '0');
+                                        let seconds = Math.floor(root.pomodoroSecondsLeft % 60).toString().padStart(2, '0');
+                                        return `${minutes}:${seconds}`;
+                                    }
+                                    font.pixelSize: 40
+                                    color: root.colOnSurface
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (!root.pomodoroRunning) {
+                                                parent.parent.isEditing = true;
+                                                timeInput.forceActiveFocus();
+                                            }
+                                        }
+                                    }
                                 }
-                                font.pixelSize: 40
-                                color: root.colOnSurface
+
+                                TextField {
+                                    id: timeInput
+                                    Layout.alignment: Qt.AlignHCenter
+                                    visible: parent.isEditing
+
+                                    font.pixelSize: 30
+                                    color: root.colOnSurface
+                                    text: Math.floor(root.pomodoroSecondsLeft / 60).toString().padStart(2, '0')
+
+                                    background: Rectangle {
+                                        radius: 8
+                                        color: "transparent"
+                                        border.color: root.colOnSurface
+                                        implicitHeight: timeText.implicitHeight - 30
+                                        implicitWidth: timeText.implicitWidth
+                                    }
+
+                                    validator: IntValidator {
+                                        bottom: 1
+                                        top: 300
+                                    }
+
+                                    onEditingFinished: {
+                                        parent.isEditing = false;
+                                        let newTime = parseInt(text);
+                                        if (!isNaN(newTime)) {
+                                            root.pomodoroSecondsLeft = newTime * 60;
+                                            root.focusTime = newTime * 60;
+                                            root.pomodoroLapDuration = newTime * 60;
+                                        }
+                                    }
+                                }
                             }
+
                             Text {
                                 Layout.alignment: Qt.AlignHCenter
                                 text: root.pomodoroLongBreak ? "Long break" : root.pomodoroBreak ? "Break" : "Focus"
@@ -335,22 +416,22 @@ Rectangle {
                             }
                         }
 
-                        Rectangle {
-                            radius: 18
-                            color: root.colLayer2
-                            anchors {
-                                right: parent.right
-                                bottom: parent.bottom
-                            }
-                            width: 36
-                            height: 36
-
-                            Text {
-                                anchors.centerIn: parent
-                                color: root.colOnLayer2
-                                text: root.pomodoroCycle + 1
-                            }
-                        }
+                        // Rectangle {
+                        //     radius: 18
+                        //     color: root.colLayer2
+                        //     anchors {
+                        //         right: parent.right
+                        //         bottom: parent.bottom
+                        //     }
+                        //     width: 36
+                        //     height: 36
+                        //
+                        //     Text {
+                        //         anchors.centerIn: parent
+                        //         color: root.colOnLayer2
+                        //         text: root.pomodoroCycle
+                        //     }
+                        // }
                     }
 
                     // pomodoro buttons
@@ -359,6 +440,7 @@ Rectangle {
                         spacing: 10
 
                         Button {
+                            id: pomodoroBtn
                             implicitHeight: 35
                             implicitWidth: 90
                             contentItem: Text {
@@ -378,7 +460,7 @@ Rectangle {
                         Button {
                             implicitHeight: 35
                             implicitWidth: 90
-                            enabled: (root.pomodoroSecondsLeft < root.pomodoroLapDuration) || root.pomodoroCycle > 0 || root.pomodoroBreak
+                            enabled: (root.pomodoroSecondsLeft < root.pomodoroLapDuration) || root.pomodoroBreak // root.pomodoroCycle > 0
                             contentItem: Text {
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
@@ -400,6 +482,61 @@ Rectangle {
                     }
                 }
             }
+
+            // modal for the time
+
+            // Item {
+            //     anchors.fill: parent
+            //     z: 999
+            //     visible: opacity > 0
+            //     opacity: root.showTimeDialog ? 1 : 0
+            //     id: modalItem
+            //
+            //     Behavior on opacity {
+            //         NumberAnimation {
+            //             duration: 200
+            //             easing.type: Easing.InOutQuad
+            //         }
+            //     }
+            //
+            //     onVisibleChanged: {
+            //         if (visible) {
+            //             timeInput.forceActiveFocus();
+            //         } else {
+            //             timeInput.text = "";
+            //             root.forceActiveFocus();
+            //         }
+            //     }
+            //
+            //     Rectangle {
+            //         radius: 15
+            //         anchors.fill: parent
+            //         color: "#80000000"
+            //         MouseArea {
+            //             anchors.fill: parent
+            //             hoverEnabled: true
+            //             onClicked: root.showTimeDialog = false
+            //         }
+            //     }
+            //
+            //     // dialog box
+            //     Rectangle {
+            //         id: dialogBox
+            //         anchors.centerIn: parent
+            //         width: 400
+            //         implicitHeight: 100
+            //         color: "white"
+            //         radius: 8
+            //
+            //         MouseArea {
+            //             anchors.fill: parent
+            //         }
+            //
+            //
+            //
+            //     }
+            // }
+            //
 
             // ==========================================
             // stopwatch

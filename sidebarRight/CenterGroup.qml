@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import QtQuick.Controls.Basic
+import QtQuick.Shapes
 
 Rectangle {
     id: root
@@ -22,7 +24,7 @@ Rectangle {
     property color btnColor: "white"
     property color btnColorHover: "#2ecc71"
     property color btnPressed: "gray"
-    property color btnSelected: "#5d5fef" // "#0D1321" 
+    property color btnSelected: "#5d5fef" // "#0D1321"
     property color btnTextColor: "white"
     property color btnTextUnselectedColor: "#8f90a6"
 
@@ -413,6 +415,219 @@ Rectangle {
                 }
             }
         }
+    }
+
+    Rectangle {
+        id: dropdown
+        implicitWidth: 120
+        implicitHeight: 40
+        color: "transparent"
+        radius: 15
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        anchors.margins: 25
+
+        ComboBox {
+            id: control
+            anchors.centerIn: parent
+            implicitWidth: parent.implicitWidth
+            implicitHeight: parent.implicitHeight
+            model: ["First", "Second", "Third", "Fourth"]
+
+            delegate: ItemDelegate {
+                id: delegate
+
+                implicitWidth: 90
+                implicitHeight: 30
+                Layout.leftMargin: 15
+
+                hoverEnabled: true
+
+                required property var model
+                required property int index
+
+                contentItem: Text {
+                    id: modelData
+                    text: delegate.model[control.textRole]
+                    color: delegate.highlighted ? root.btnSelected : root.btnColor
+                    font: control.font
+                    elide: Text.ElideRight
+                    verticalAlignment: Text.AlignVCenter
+                }
+
+                background: Rectangle {
+                    color: delegate.hovered ? Qt.rgba(255, 255, 255, 0.1) : "transparent"
+                    radius: 15
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 150
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+                }
+
+                // highlighted: control.highlightedIndex === index
+            }
+
+            // from: https://doc.qt.io/qt-6/qtquickcontrols-customize.html
+            indicator: Item {
+                id: dropdownCanvas
+                x: control.width - width - control.rightPadding
+                y: control.topPadding + (control.availableHeight - height) / 2
+                implicitWidth: 12
+                implicitHeight: 8
+
+                Canvas {
+                    anchors.centerIn: parent
+                    contextType: "2d"
+                    implicitHeight: parent.implicitHeight
+                    implicitWidth: parent.implicitWidth
+
+                    Connections {
+                        target: control
+                        function onPressedChanged() {
+                            dropdownCanvas.requestPaint();
+                        }
+                    }
+
+                    onPaint: {
+                        context.reset();
+                        context.moveTo(0, 0);
+                        context.lineTo(width, 0);
+                        context.lineTo(width / 2, height);
+                        context.closePath();
+                        context.fillStyle = control.pressed ? root.btnSelected : root.btnSelected;
+                        context.fill();
+                    }
+
+                    rotation: control.popup.visible ? 0 : 90
+
+                    Behavior on rotation {
+                        NumberAnimation {
+                            duration: 100
+                            easing.type: Easing.OutSine
+                        }
+                    }
+                }
+            }
+
+            contentItem: Text {
+                leftPadding: 10
+                rightPadding: control.indicator.width + control.spacing
+
+                text: control.displayText
+                font: control.font
+                color: control.pressed || dropdownPopup.visible ? root.btnSelected : "white"
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 100
+                    }
+                }
+            }
+
+            background: Rectangle {
+                color: "transparent"
+                radius: 15
+                implicitWidth: 120
+                implicitHeight: 40
+                border.color: root.btnSelected
+                border.width: control.visualFocus ? 2 : 1
+
+                Behavior on border.color {
+                    ColorAnimation {
+                        duration: 200
+                    }
+                }
+            }
+
+            popup: Popup {
+                id: dropdownPopup
+                y: control.height + 5
+                width: control.width
+                height: Math.min(contentItem.implicitHeight, control.Window.height - topMargin - bottomMargin) + 10
+
+                enter: Transition {
+                    ParallelAnimation {
+                        NumberAnimation {
+                            property: "opacity"
+                            from: 0.0
+                            to: 1.0
+                            duration: 200
+                            easing.type: Easing.OutQuad
+                        }
+                        NumberAnimation {
+                            property: "y"
+                            from: control.height - 10
+                            to: control.height + 5
+                            duration: 200
+                            easing.type: Easing.OutBack
+                        }
+                    }
+                }
+
+                exit: Transition {
+                    ParallelAnimation {
+                        NumberAnimation {
+                            property: "opacity"
+                            from: 1.0
+                            to: 0.0
+                            duration: 150
+                            easing.type: Easing.InQuad
+                        }
+                        NumberAnimation {
+                            property: "y"
+                            from: control.height + 5
+                            to: control.height - 10
+                            duration: 150
+                            easing.type: Easing.InQuad
+                        }
+                    }
+                }
+
+                contentItem: ListView {
+                    id: dropdownList
+                    clip: true
+                    implicitHeight: contentHeight + 14
+                    model: control.popup.visible ? control.delegateModel : null
+                    currentIndex: control.highlightedIndex
+
+                    ScrollIndicator.vertical: ScrollIndicator {}
+                }
+
+                background: Rectangle {
+                    implicitWidth: dropdownPopup.implicitWidth
+                    Layout.leftMargin: 4
+                    // border.color: root.btnSelected
+                    color: Qt.rgba(255, 255, 255, 0.3)
+                    radius: 15
+                }
+            }
+        }
+
+        // ComboBox {
+        //     anchors.centerIn: parent
+        //     model: ListModel {
+        //         id: model
+        //         ListElement {
+        //             text: "hello"
+        //         }
+        //         ListElement {
+        //             text: "bye"
+        //         }
+        //         ListElement {
+        //             text: "sth"
+        //         }
+        //     }
+        //     background: Rectangle {
+        //         color: "transparent"
+        //         implicitWidth: 80
+        //         implicitHeight: 30
+        //     }
+        // }
     }
 
     // add task button
