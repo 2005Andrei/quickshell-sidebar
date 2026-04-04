@@ -501,7 +501,7 @@ Rectangle {
                         context.fill();
                     }
 
-                    rotation: control.popup.visible ? 0 : 90
+                    rotation: control.popup.visible ? 180 : 90
 
                     Behavior on rotation {
                         NumberAnimation {
@@ -546,7 +546,7 @@ Rectangle {
 
             popup: Popup {
                 id: dropdownPopup
-                y: control.height + 5
+                y: -100
                 width: control.width
                 height: Math.min(contentItem.implicitHeight, control.Window.height - topMargin - bottomMargin) + 10
 
@@ -561,8 +561,8 @@ Rectangle {
                         }
                         NumberAnimation {
                             property: "y"
-                            from: control.height - 10
-                            to: control.height + 5
+                            from: -100
+                            to: -150
                             duration: 200
                             easing.type: Easing.OutBack
                         }
@@ -580,8 +580,8 @@ Rectangle {
                         }
                         NumberAnimation {
                             property: "y"
-                            from: control.height + 5
-                            to: control.height - 10
+                            from: -150
+                            to: -100
                             duration: 150
                             easing.type: Easing.InQuad
                         }
