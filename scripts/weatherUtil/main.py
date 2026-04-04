@@ -1,7 +1,15 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# dependencies = ["requests", "pyquery"]
+# ///
+
+
+
+
 # /* ---- 💫 https://github.com/JaKooLit 💫 ---- */  #
 # original code https://gist.github.com/Surendrajat/ff3876fd2166dd86fb71180f4e9342d7
 # weather using python
+
 
 import requests
 import json
@@ -23,7 +31,6 @@ weather_icons = {
 }
 
 
-# Get current location based on IP address
 def get_location():
     response = requests.get("https://ipinfo.io")
     data = response.json()

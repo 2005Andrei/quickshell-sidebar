@@ -1,12 +1,44 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell.Io
 
 Rectangle {
+    id: root
     implicitWidth: parent.width
     radius: 15
     Layout.margins: 5
     color: Qt.rgba(0, 0, 0, 0.9)
+
+    // "location": "Spitalul General C.F.Brasov, 60, Bulevardul 15 Noiembrie, Centrul Nou, Bra\u0219ov, Zona Metropolitan\u0103 Bra\u0219ov, Bra\u0219ov, 500097, Rom\u00e2nia",
+    // "temp": "10.381500244140625",
+    // "feels": "7.960375785827637",
+    // "rain": "0.0",
+    // "precipitation": "0.0",
+    // "high": "12.531501",
+    // "low": "7.4315"
+
+    FileView {
+        id: jsonFile
+        path: "/home/andrei/.cache/.weather_cache"
+
+        watchChanges: true
+        onFileChanged: this.reload()
+
+        onAdapterUpdated: writeAdapter()
+
+        printErrors: true
+        blockLoading: true
+    }
+
+    property var jsonData: JSON.parse(jsonFile.text())
+    property string location: jsonData["location"]
+    property string temp: jsonData["temp"]
+    property string feels: jsonData["feels"]
+    property string rain: jsonData["rain"]
+    property string precipitation: jsonData["precipitation"]
+    property string high: jsonData["high"]
+    property string low: jsonData["low"]
 
     RowLayout {
         anchors.fill: parent
@@ -47,14 +79,15 @@ Rectangle {
                     spacing: -2
 
                     Text {
-                        text: "23°"
+                        text: root.temp + "\u2103"
                         font.pixelSize: 26
                         font.weight: Font.DemiBold
                         color: "#cdd6f4"
                     }
 
                     Text {
-                        text: "Brașov"
+                        leftPadding: -5
+                        text: root.location
                         font.pixelSize: 13
                         font.weight: Font.Light
                         color: "#a6adc8"
@@ -73,7 +106,7 @@ Rectangle {
 
             Text {
                 Layout.alignment: Qt.AlignRight
-                text: "Feels like 20°"
+                text: "Feels like " + root.feels + "\u2103"
                 font.pixelSize: 13
                 font.weight: Font.Medium
                 color: "#a6adc8"
@@ -91,7 +124,7 @@ Rectangle {
                         color: "#89b4fa"
                     }
                     Text {
-                        text: "8°"
+                        text: root.low + "\u2103"
                         font.pixelSize: 13
                         font.weight: Font.Medium
                         color: "#cdd6f4"
@@ -112,7 +145,7 @@ Rectangle {
                         color: "#f38ba8"
                     }
                     Text {
-                        text: "12°"
+                        text: root.high + "\u2103"
                         font.pixelSize: 13
                         font.weight: Font.Medium
                         color: "#cdd6f4"
@@ -133,7 +166,7 @@ Rectangle {
                         color: "#94e2d5"
                     }
                     Text {
-                        text: "65%"
+                        text: (parseInt(root.precipitation) < parseInt(root.rain)) ? root.precipitation + "%" : root.rain + "%"
                         font.pixelSize: 13
                         font.weight: Font.Medium
                         color: "#cdd6f4"
