@@ -1,4 +1,4 @@
-CFLAGS = -Wall -Wextra -O2
+CFLAGS = -Wall -Wextra -O2 -g # -fsanitize=address
 LDFLAGS = -luuid 
 
 
