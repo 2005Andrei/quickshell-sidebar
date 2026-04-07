@@ -13,7 +13,7 @@ ShellRoot {
         implicitWidth: 450
         focusable: true
         color: "transparent"
-        property bool isVisible: true
+        property bool isVisible: false
         visible: isVisible || animation.running
 
         anchors {

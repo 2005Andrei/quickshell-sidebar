@@ -7,57 +7,28 @@
 #include <time.h>
 #include <uuid/uuid.h>
 
+#define LIST_NAMES "/home/andrei/.local/share/tasks/list_names.txt"
 #define LISTS_FILE "/home/andrei/.local/share/tasks/lists.json"
-#define DATA_FILE "/home/andrei/.local/share/errands/data.json"
 #define TASKS_FILE "/home/andrei/.local/share/tasks/tasks.json"
+#define DATA_FILE "/home/andrei/.local/share/errands/data.json"
 
 /*
- * small script that syncs tasks I define with the Errands app
- * (https://github.com/mrvladus/Errands). Errands stores tasks at
- * ~/.local/share/errands/data.json, and because I do not want qml handling too
- * much json, I decided to introduce a middleman this code will save tasks at
- * ~/.local/share/quickshell/tasks
- * this leaves me to add the following attributes:
- *      attachments: [],
- *      "color"
- *      "completed"
- *      "changed_at":"20260326T202631",
- *      "created_at":"20260326T202631",
- *      "deleted"
- *      "due_date"
- *      "expanded"
- *      "list_uid"
- *      "notes"
- *      "notified"
- *      "parent"
- *      "percent_complete"
- *      "priority"
- *      "rrule"
- *      "start_date"
- *      "synced"
- *      "tags":[
+ * the plan was to be able to modify errands (an app to track tasks) from my
+ * sidebar I didn't know it has persistent memory - I found that out the hard
+ * way after I'd already managed to load and delete tasks from the app.
  *
- *       ],
- *      "text"
- *      "toolbar_shown"
- *      "trash"
- *      "uid"
+ * just to not have spent this time figuring out the cJSON library for nothing,
+ * I'll change the role of this code to be a system utility that writes and
+ * updates tasks as needed
  *
- *  tasks:
- *      1) load tasks from data.json
- *      2) ensure writing ability from qml, add it to data.json at the same time
- *      3) file watcher -> whenever a task is created from errands it gets added
- *         so qml can see it.
- *
+ * some of these functions are left overs from me trying to reduce the JSON
+ * objects from the errands data file, that I might integrate at some point
+ * because I still think I'm going to want to view errands tasks from my sidebar
  * */
 
-// generate errands compliant time
 void get_formatted_time(char *buffer, size_t size) {
     time_t t = time(NULL);
     struct tm *tm_info = localtime(&t);
-
-    printf("%ld", t);
-    printf("\n%s", asctime(tm_info));
 
     strftime(buffer, size, "%Y%m%dT%H%M%S", tm_info);
 }
@@ -79,30 +50,15 @@ cJSON *create_new_task(char *text, char *list_uid) {
     get_formatted_time(time_str, 16);
     get_uuid(uuid_str);
 
-    cJSON_AddItemToObject(task, "attachments", cJSON_CreateArray());
-    cJSON_AddItemToObject(task, "tags", cJSON_CreateArray());
+    printf("%s\n", uuid_str);
 
-    cJSON_AddStringToObject(task, "color", "");
-    cJSON_AddStringToObject(task, "changed_at", time_str);
     cJSON_AddStringToObject(task, "created_at", time_str);
-    cJSON_AddStringToObject(task, "due_date", "");
     cJSON_AddStringToObject(task, "list_uid", list_uid);
-    cJSON_AddStringToObject(task, "notes", "");
-    cJSON_AddStringToObject(task, "parent", "");
-    cJSON_AddStringToObject(task, "rrule", "");
-    cJSON_AddStringToObject(task, "start_date", "");
     cJSON_AddStringToObject(task, "text", text);
     cJSON_AddStringToObject(task, "uid", uuid_str);
 
     cJSON_AddBoolToObject(task, "completed", 0);
     cJSON_AddBoolToObject(task, "deleted", 0);
-    cJSON_AddBoolToObject(task, "expanded", 0);
-    cJSON_AddBoolToObject(task, "notified", 0);
-    cJSON_AddNumberToObject(task, "percent_complete", 0);
-    cJSON_AddNumberToObject(task, "priority", 0);
-    cJSON_AddBoolToObject(task, "synced", 0);
-    cJSON_AddBoolToObject(task, "toolbar_shown", 1);
-    cJSON_AddBoolToObject(task, "trash", 0);
 
     return task;
 }
@@ -253,54 +209,76 @@ int main(int argc, char *argv[]) {
         char *task_text = argv[2];
         char *list_uid = argv[4];
 
-        // create json obj to save in data.json
         cJSON *new_task = create_new_task(task_text, list_uid);
 
-        if (new_task == NULL) {
-            printf("great failure");
-        }
+        cJSON *content = read_json_from_file(TASKS_FILE);
 
-        cJSON *content = read_json_from_file(DATA_FILE);
-
-        cJSON *tasks = cJSON_GetObjectItem(content, "tasks");
-        cJSON_AddItemToArray(tasks, new_task);
+        cJSON_AddItemToArray(content, new_task);
 
         char *string_content = cJSON_Print(content);
         int size = strlen(string_content);
 
-        FILE *data_file = fopen("/home/andrei/Desktop/test.json", "w");
+        FILE *data_file = fopen(TASKS_FILE, "w");
 
         if (data_file == NULL) {
-            printf("Great failure");
+            printf("Great failure"); // shouldn't happen though
+            return 1;
         }
 
         fwrite(string_content, 1, size, data_file);
 
         fclose(data_file);
 
+        free(string_content);
         cJSON_Delete(content); // this deletes all the children, including tasks
                                // and new_task
 
         return 0;
     }
 
-    if (argc == 2 && strcmp(argv[1], "sync") == 0) {
-        // when data.json gets updated
-        cJSON *content = read_json_from_file(DATA_FILE);
+    if (argc == 3 && strcmp(argv[1], "--delete") == 0) {
+        cJSON *tasks = read_json_from_file(TASKS_FILE);
 
-        cJSON *tasks = cJSON_GetObjectItem(content, "tasks");
-        cJSON *lists = cJSON_GetObjectItem(content, "lists");
+        cJSON *task = NULL;
 
-        write_list_file(lists);
-        write_tasks_file(tasks);
+        cJSON_ArrayForEach(task, tasks) {
+            cJSON *uid = cJSON_GetObjectItem(task, "uid");
 
-        cJSON_Delete(content);
+            if (strcmp(argv[2], cJSON_GetStringValue(uid)) == 0) {
+                break;
+            }
+        }
+
+        if (task == NULL) {
+            printf("\ntask not found");
+            cJSON_Delete(tasks);
+            return 1;
+        }
+
+        cJSON *deleted = cJSON_GetObjectItem(task, "deleted");
+        cJSON_DeleteItemFromObject(task, "deleted");
+        cJSON_AddBoolToObject(task, "deleted", !cJSON_IsTrue(deleted));
+
+        char *curr_task = cJSON_Print(task);
+        printf("\n%s\n", curr_task);
+
+        FILE *data_f = fopen(TASKS_FILE, "w");
+
+        char *jtasks = cJSON_Print(tasks);
+        int size = strlen(jtasks);
+
+        fwrite(jtasks, 1, size, data_f);
+
+        fclose(data_f);
+
+        free(jtasks);
+
+        return 0;
     }
 
-    if (argc == 3 && strcmp(argv[1], "--delete") == 0) {
-        cJSON *content = read_json_from_file(DATA_FILE);
+    if (argc == 3 && strcmp(argv[1], "--complete") == 0) {
+        cJSON *tasks = read_json_from_file(TASKS_FILE);
 
-        cJSON *tasks = cJSON_GetObjectItem(content, "tasks");
         cJSON *task = NULL;
 
         cJSON_ArrayForEach(task, tasks) {
@@ -316,26 +294,103 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-        cJSON *deleted = cJSON_GetObjectItem(task, "deleted");
-        cJSON_DeleteItemFromObject(task, "deleted");
-        cJSON_AddBoolToObject(task, "deleted", !cJSON_IsTrue(deleted));
+        cJSON *completed = cJSON_GetObjectItem(task, "completed");
+        cJSON_DeleteItemFromObject(task, "completed");
+        cJSON_AddBoolToObject(task, "completed", !cJSON_IsTrue(completed));
 
         char *curr_task = cJSON_Print(task);
         printf("\n%s\n", curr_task);
 
-        FILE *data_f = fopen(DATA_FILE, "w");
+        FILE *data_f = fopen(TASKS_FILE, "w");
 
-        char *jcontent = cJSON_Print(content);
-        int size = strlen(jcontent);
+        char *jtasks = cJSON_Print(tasks);
+        int size = strlen(jtasks);
 
-        fwrite(jcontent, 1, size, data_f);
+        fwrite(jtasks, 1, size, data_f);
 
         fclose(data_f);
 
-        free(jcontent);
+        free(jtasks);
+
+        return 0;
     }
 
-    if (argc == 3 && strcmp(argv[1], "--complete") == 0) {
+    // at the moment, I can only define lists from a file
+    if (argc == 2 && strcmp(argv[1], "sync-lists") == 0) {
+        FILE *lists = fopen(LIST_NAMES, "r");
+
+        if (lists == NULL) {
+            perror("fopen");
+            return 1;
+        }
+
+        char buffer[32];
+        char *list_names[50];
+        int i = 0;
+
+        while (fscanf(lists, "%s", buffer) == 1) {
+            list_names[i] = strdup(buffer);
+            i++;
+        }
+
+        fclose(lists);
+
+        cJSON *curr_lists = read_json_from_file(LISTS_FILE);
+        cJSON *jbuffer = NULL;
+
+        for (int j = 0; j < i; j++) {
+            int included = 0;
+            cJSON_ArrayForEach(jbuffer, curr_lists) {
+                cJSON *cur_name = cJSON_GetObjectItem(jbuffer, "name");
+                char *name = cJSON_GetStringValue(cur_name);
+
+                if (strcmp(list_names[j], name) == 0) {
+                    printf("included\n");
+                    included = 1;
+                }
+            }
+
+            if (!included) {
+                printf("not included again\n");
+                char uid[37];
+                get_uuid(uid);
+
+                cJSON *new_list_object = cJSON_CreateObject();
+                cJSON_AddStringToObject(new_list_object, "name", list_names[j]);
+                cJSON_AddStringToObject(new_list_object, "uid", uid);
+
+                char *list_content = cJSON_Print(new_list_object);
+                printf("%s\n", list_content);
+
+                cJSON_AddItemToArray(curr_lists, new_list_object);
+            }
+        }
+
+        FILE *write_list_stream = fopen(LISTS_FILE, "w");
+
+        char *content = cJSON_Print(curr_lists);
+        int size = strlen(content);
+
+        fwrite(content, 1, size, write_list_stream);
+
+        fclose(write_list_stream);
+
+        return 0;
+    }
+
+    // a leftover to sync tasks and lists with the errands app
+    if (argc == 2 && strcmp(argv[1], "sync") == 0) {
+        cJSON *content = read_json_from_file(DATA_FILE);
+
+        cJSON *tasks = cJSON_GetObjectItem(content, "tasks");
+        cJSON *lists = cJSON_GetObjectItem(content, "lists");
+
+        write_list_file(lists);
+        write_tasks_file(tasks);
+
+        cJSON_Delete(content);
+
+        return 0;
     }
 
     return 0;

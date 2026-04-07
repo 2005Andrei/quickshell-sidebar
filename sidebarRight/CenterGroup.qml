@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import QtQuick.Controls.Basic
 import QtQuick.Shapes
+import Quickshell.Io
 
 Rectangle {
     id: root
@@ -38,18 +39,137 @@ Rectangle {
     property int unfinishedCount: 0
     property int doneCount: 0
 
-    Component.onCompleted: updateCounts()
+    FileView {
+        id: listsFile
+        path: "/home/andrei/.local/share/tasks/lists.json"
+
+        watchChanges: true
+        onFileChanged: {
+            this.reload();
+            loadLists();
+        }
+
+        onAdapterUpdated: writeAdapter()
+
+        printErrors: true
+        blockLoading: true
+    }
+
+    FileView {
+        id: tasksFile
+        path: "/home/andrei/.local/share/tasks/tasks.json"
+
+        watchChanges: false
+
+        onAdapterUpdated: writeAdapter()
+
+        printErrors: true
+        blockLoading: true
+    }
+
+    property var lists: []
+    property var tasks: []
+
+    property string curr_list_uid: ""
+
+    Process {
+        id: fileProcess
+
+        function addAsyncTask() {
+            command = ["/home/andrei/.config/quickshell/scripts/taskUtil/sync-tasks", "--add", taskInput.text.trim(), "--list", root.curr_list_uid.trim()];
+            running = true;
+        }
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var uid = this.text.trim();
+                console.log("uid: " + uid);
+                for (var i = 0; i < todoModel.count; i++) {
+                    console.log(todoModel.get(i).uid);
+                    if (todoModel.get(i).uid === "undefined") {
+                        console.log("yes: " + uid);
+                        todoModel.setProperty(i, "uid", uid);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    Process {
+        id: editTask
+
+        function deleteTask(task_uid) {
+            command = ["/home/andrei/.config/quickshell/scripts/taskUtil/sync-tasks", "--delete", task_uid];
+            running = true;
+        }
+
+        function completeTask(task_uid) {
+            command = ["/home/andrei/.config/quickshell/scripts/taskUtil/sync-tasks", "--complete", task_uid];
+            running = true;
+        }
+    }
 
     ListModel {
         id: todoModel
-        ListElement {
-            description: "get more work done"
-            done: false
+    }
+
+    ListModel {
+        id: listsModel
+    }
+
+    function loadTasks() {
+        let tasks = tasksFile.text();
+
+        if (!tasks) {
+            console.log("fuckl");
         }
-        ListElement {
-            description: "sitting"
-            done: true
+
+        root.tasks = JSON.parse(tasks);
+
+        todoModel.clear();
+
+        for (let i = 0; i < root.tasks.length; i++) {
+            if (root.tasks[i].list_uid == root.curr_list_uid && !root.tasks[i].deleted) {
+                todoModel.append({
+                    "description": root.tasks[i].text,
+                    "list_uid": root.tasks[i].list_uid,
+                    "uid": root.tasks[i].uid,
+                    "done": root.tasks[i].completed,
+                    "deleted": root.tasks[i].deleted
+                });
+            }
         }
+    }
+
+    function loadLists() {
+        let lists = listsFile.text();
+
+        root.lists = JSON.parse(lists);
+
+        listsModel.clear();
+
+        for (let i = 0; i < root.lists.length; i++) {
+            listsModel.append({
+                "name": root.lists[i].name,
+                "list_uid": root.lists[i].uid
+            });
+        }
+
+        if (root.curr_list_uid === "") {
+            root.curr_list_uid = listsModel.get(0).list_uid;
+            control.currentIndex = 0;
+        }
+
+        loadTasks();
+    }
+
+    // onVisibleChanged: {
+    //     loadTasks();
+    // }
+
+    Component.onCompleted: {
+        loadLists();
     }
 
     function updateCounts() {
@@ -70,12 +190,17 @@ Rectangle {
         if (taskInput.text.trim().length > 0) {
             todoModel.append({
                 description: taskInput.text.trim(),
+                uid: "undefined",
                 done: false
             });
-            taskInput.text = "";
             root.showAddDialog = false;
             tabBar.setCurrentIndex(0);
             updateCounts();
+
+            console.log("yup, on add");
+            fileProcess.addAsyncTask();
+
+            taskInput.text = "";
         }
     }
 
@@ -183,8 +308,11 @@ Rectangle {
                         }
 
                         onClicked: {
+                            // here, done btn
+                            var target_uid = model.uid;
                             todoModel.setProperty(index, "done", !model.done);
                             root.updateCounts();
+                            editTask.completeTask(target_uid);
                         }
                     }
 
@@ -205,8 +333,11 @@ Rectangle {
                         }
 
                         onClicked: {
+                            // here, the remove btn
+                            var uid = model.uid;
                             todoModel.remove(index);
                             root.updateCounts();
+                            editTask.deleteTask(uid);
                         }
                     }
                 }
@@ -350,24 +481,6 @@ Rectangle {
                     }
                 }
             }
-
-            // Rectangle {
-            //     id: movingBg
-            //     radius: 15
-            //     color: root.btnSelected
-            //     z: -1
-            //     implicitWidth: tabBtn1.width
-            //     implicitHeight: tabBtn1.height
-            //     y: 0
-            //     x: tabBar.currentIndex === 0 ? tabBtn1.x : tabBtn2.x
-            //
-            //     Behavior on x {
-            //         NumberAnimation {
-            //             duration: 200
-            //             easing.type: Easing.InOutQuad
-            //         }
-            //     }
-            // }
         }
 
         SwipeView {
@@ -383,16 +496,24 @@ Rectangle {
                     text: "You should get to work"
                     font.pixelSize: 16
                     color: root.secondaryTextColor
-                    visible: root.unfinishedCount === 0
+                    visible: root.tasks.count === 0
                 }
                 ListView {
                     id: unfinishedList
                     objectName: "unfinishedList"
                     anchors.fill: parent
-                    anchors.margins: 10
+                    clip: true
+                    bottomMargin: 60
+                    anchors.bottomMargin: 90
+                    anchors.topMargin: 20
+                    anchors.leftMargin: 5
+                    anchors.rightMargin: 5
                     model: todoModel
                     delegate: taskDelegate
-                    bottomMargin: 80
+
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AsNeeded
+                    }
                 }
             }
 
@@ -402,16 +523,25 @@ Rectangle {
                     text: "You haven't finished anything young blood"
                     font.pixelSize: 16
                     color: root.secondaryTextColor
-                    visible: root.doneCount === 0
+                    visible: root.tasks.count === 0
                 }
                 ListView {
                     id: doneList
                     objectName: "doneList"
                     anchors.fill: parent
-                    anchors.margins: 10
+
+                    bottomMargin: 60
+                    anchors.bottomMargin: 90
+                    anchors.topMargin: 20
+                    anchors.leftMargin: 5
+                    anchors.rightMargin: 5
+
                     model: todoModel
                     delegate: taskDelegate
-                    bottomMargin: 80
+
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AsNeeded
+                    }
                 }
             }
         }
@@ -432,7 +562,10 @@ Rectangle {
             anchors.centerIn: parent
             implicitWidth: parent.implicitWidth
             implicitHeight: parent.implicitHeight
-            model: ["First", "Second", "Third", "Fourth"]
+            model: listsModel
+
+            textRole: "name"
+            valueRole: "list_uid"
 
             delegate: ItemDelegate {
                 id: delegate
@@ -448,7 +581,7 @@ Rectangle {
 
                 contentItem: Text {
                     id: modelData
-                    text: delegate.model[control.textRole]
+                    text: model.name
                     color: delegate.highlighted ? root.btnSelected : root.btnColor
                     font: control.font
                     elide: Text.ElideRight
@@ -470,6 +603,11 @@ Rectangle {
                 // highlighted: control.highlightedIndex === index
             }
 
+            onActivated: {
+                root.curr_list_uid = control.currentValue;
+                loadTasks();
+            }
+
             // from: https://doc.qt.io/qt-6/qtquickcontrols-customize.html
             indicator: Item {
                 id: dropdownCanvas
@@ -479,26 +617,28 @@ Rectangle {
                 implicitHeight: 8
 
                 Canvas {
+                    id: arrowCanvas
                     anchors.centerIn: parent
-                    contextType: "2d"
                     implicitHeight: parent.implicitHeight
                     implicitWidth: parent.implicitWidth
 
                     Connections {
                         target: control
                         function onPressedChanged() {
-                            dropdownCanvas.requestPaint();
+                            arrowCanvas.requestPaint();
                         }
                     }
 
+                    // if you get context in the canvas constructor it loses it every time you reopen the sidebar, so it's better to call for it in onPaint
                     onPaint: {
-                        context.reset();
-                        context.moveTo(0, 0);
-                        context.lineTo(width, 0);
-                        context.lineTo(width / 2, height);
-                        context.closePath();
-                        context.fillStyle = control.pressed ? root.btnSelected : root.btnSelected;
-                        context.fill();
+                        var ctx = getContext("2d");
+                        ctx.reset();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(width, 0);
+                        ctx.lineTo(width / 2, height);
+                        ctx.closePath();
+                        ctx.fillStyle = control.pressed ? root.btnSelected : root.btnSelected;
+                        ctx.fill();
                     }
 
                     rotation: control.popup.visible ? 180 : 90
@@ -546,9 +686,9 @@ Rectangle {
 
             popup: Popup {
                 id: dropdownPopup
-                y: -100
                 width: control.width
                 height: Math.min(contentItem.implicitHeight, control.Window.height - topMargin - bottomMargin) + 10
+                y: -height - 5
 
                 enter: Transition {
                     ParallelAnimation {
@@ -561,8 +701,8 @@ Rectangle {
                         }
                         NumberAnimation {
                             property: "y"
-                            from: -100
-                            to: -150
+                            from: -control.height / 2
+                            to: -dropdownPopup.height - 5
                             duration: 200
                             easing.type: Easing.OutBack
                         }
@@ -580,8 +720,8 @@ Rectangle {
                         }
                         NumberAnimation {
                             property: "y"
-                            from: -150
-                            to: -100
+                            from: -dropdownPopup.height - 5
+                            to: -control.height / 2
                             duration: 150
                             easing.type: Easing.InQuad
                         }
@@ -632,7 +772,7 @@ Rectangle {
 
     // add task button
     Rectangle {
-        id: fabButton
+        id: addBtn
         width: 45
         height: 45
         radius: 15
@@ -918,7 +1058,9 @@ Rectangle {
                         ]
 
                         enabled: taskInput.text.trim().length > 0
-                        onClicked: root.addTask()
+                        onClicked: {
+                            root.addTask();
+                        }
                     }
 
                     // Button {
