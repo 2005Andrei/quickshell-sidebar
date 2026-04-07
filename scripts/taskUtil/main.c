@@ -13,13 +13,14 @@
 #define DATA_FILE "/home/andrei/.local/share/errands/data.json"
 
 /*
- * the plan was to be able to modify errands (an app to track tasks) from my
- * sidebar I didn't know it has persistent memory - I found that out the hard
- * way after I'd already managed to load and delete tasks from the app.
+ * the plan was to be able to modify errands tasks (an app to track tasks) from
+ * my sidebar. I didn't know it has persistent memory - I found that out the
+ * hard way after I'd already managed to load and delete tasks from the app, but
+ * the app would undo the overwrites immediately
  *
  * just to not have spent this time figuring out the cJSON library for nothing,
- * I'll change the role of this code to be a system utility that writes and
- * updates tasks as needed
+ * I've changed the role of this code to be a utility that writes and
+ * updates tasks as needed to a diffenrent folder
  *
  * some of these functions are left overs from me trying to reduce the JSON
  * objects from the errands data file, that I might integrate at some point
@@ -33,14 +34,12 @@ void get_formatted_time(char *buffer, size_t size) {
     strftime(buffer, size, "%Y%m%dT%H%M%S", tm_info);
 }
 
-// generate uuid
 void get_uuid(char *buffer) {
     uuid_t binuuid;
     uuid_generate(binuuid);
     uuid_unparse(binuuid, buffer);
 }
 
-// creating a new task
 cJSON *create_new_task(char *text, char *list_uid) {
     cJSON *task = cJSON_CreateObject();
 
@@ -63,7 +62,6 @@ cJSON *create_new_task(char *text, char *list_uid) {
     return task;
 }
 
-// file utility, as the name suggests
 cJSON *read_json_from_file(char *filename) {
     FILE *file = fopen(filename, "r");
 
@@ -196,7 +194,6 @@ int get_json_length(cJSON *json_array) {
     return count;
 }
 
-// add task, sync, get lists
 int main(int argc, char *argv[]) {
 
     if (argc == 1) {
@@ -221,7 +218,7 @@ int main(int argc, char *argv[]) {
         FILE *data_file = fopen(TASKS_FILE, "w");
 
         if (data_file == NULL) {
-            printf("Great failure"); // shouldn't happen though
+            printf("Great failure");
             return 1;
         }
 
@@ -317,7 +314,8 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    // at the moment, I can only define lists from a file
+    // at the moment, I can only define lists from a file in a .txt file, after
+    // which I have to run ./sync-tasks sync-lists
     if (argc == 2 && strcmp(argv[1], "sync-lists") == 0) {
         FILE *lists = fopen(LIST_NAMES, "r");
 
