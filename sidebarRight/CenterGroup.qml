@@ -140,6 +140,7 @@ Rectangle {
                 });
             }
         }
+        updateCounts();
     }
 
     function loadLists() {
@@ -496,7 +497,7 @@ Rectangle {
                     text: "You should get to work"
                     font.pixelSize: 16
                     color: root.secondaryTextColor
-                    visible: root.tasks.count === 0
+                    visible: root.unfinishedCount === 0
                 }
                 ListView {
                     id: unfinishedList
@@ -523,7 +524,7 @@ Rectangle {
                     text: "You haven't finished anything young blood"
                     font.pixelSize: 16
                     color: root.secondaryTextColor
-                    visible: root.tasks.count === 0
+                    visible: root.doneCount === 0
                 }
                 ListView {
                     id: doneList

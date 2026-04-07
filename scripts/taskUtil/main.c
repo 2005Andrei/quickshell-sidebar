@@ -272,6 +272,7 @@ int main(int argc, char *argv[]) {
         fclose(data_f);
 
         free(jtasks);
+        cJSON_Delete(tasks);
 
         return 0;
     }
@@ -311,6 +312,7 @@ int main(int argc, char *argv[]) {
         fclose(data_f);
 
         free(jtasks);
+        cJSON_Delete(tasks);
 
         return 0;
     }
