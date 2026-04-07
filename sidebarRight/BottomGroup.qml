@@ -43,13 +43,6 @@ Rectangle {
     property real stopwatchTime: 0
     property bool stopwatchRunning: false
     property bool showTimeDialog: false
-    property bool rechargeTimer: false
-
-
-    onRechargeTimerChanged: {
-        root.pomodoroSecondsLeft = root.pomodoroLapDuration
-        root.rechargeTimer = !root.rechargeTimer
-    }
 
     Timer {
         id: pomodoroTimerInternal
@@ -60,7 +53,7 @@ Rectangle {
             if (root.pomodoroSecondsLeft > 0) {
                 root.pomodoroSecondsLeft--;
             } else {
-                root.rechargeTimer = true;
+                root.pomodoroSecondsLeft = root.pomodoroLapDuration;
                 root.pomodoroRunning = false;
             }
         }
@@ -400,14 +393,15 @@ Rectangle {
                                         implicitWidth: timeText.implicitWidth
                                     }
 
-                                    validator: IntValidator {
-                                        bottom: 1
-                                        top: 300
+                                    validator: DoubleValidator {
+                                        bottom: 0.10
+                                        top: 300.00
+                                        decimals: 2
                                     }
 
                                     onEditingFinished: {
                                         parent.isEditing = false;
-                                        let newTime = parseInt(text);
+                                        let newTime = parseFloat(text);
                                         if (!isNaN(newTime)) {
                                             root.pomodoroSecondsLeft = newTime * 60;
                                             root.focusTime = newTime * 60;
