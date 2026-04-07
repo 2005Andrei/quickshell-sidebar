@@ -10,14 +10,6 @@ Rectangle {
     Layout.margins: 5
     color: Qt.rgba(0, 0, 0, 0.9)
 
-    // "location": "Spitalul General C.F.Brasov, 60, Bulevardul 15 Noiembrie, Centrul Nou, Bra\u0219ov, Zona Metropolitan\u0103 Bra\u0219ov, Bra\u0219ov, 500097, Rom\u00e2nia",
-    // "temp": "10.381500244140625",
-    // "feels": "7.960375785827637",
-    // "rain": "0.0",
-    // "precipitation": "0.0",
-    // "high": "12.531501",
-    // "low": "7.4315"
-
     FileView {
         id: jsonFile
         path: "/home/andrei/.cache/.weather_cache"

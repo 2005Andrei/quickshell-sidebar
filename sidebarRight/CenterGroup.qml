@@ -748,27 +748,6 @@ Rectangle {
                 }
             }
         }
-
-        // ComboBox {
-        //     anchors.centerIn: parent
-        //     model: ListModel {
-        //         id: model
-        //         ListElement {
-        //             text: "hello"
-        //         }
-        //         ListElement {
-        //             text: "bye"
-        //         }
-        //         ListElement {
-        //             text: "sth"
-        //         }
-        //     }
-        //     background: Rectangle {
-        //         color: "transparent"
-        //         implicitWidth: 80
-        //         implicitHeight: 30
-        //     }
-        // }
     }
 
     // add task button
@@ -1063,12 +1042,6 @@ Rectangle {
                             root.addTask();
                         }
                     }
-
-                    // Button {
-                    //     text: "Add"
-                    //     enabled: taskInput.text.trim().length > 0
-                    //     onClicked: root.addTask()
-                    // }
                 }
             }
         }
