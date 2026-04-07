@@ -43,6 +43,13 @@ Rectangle {
     property real stopwatchTime: 0
     property bool stopwatchRunning: false
     property bool showTimeDialog: false
+    property bool rechargeTimer: false
+
+
+    onRechargeTimerChanged: {
+        root.pomodoroSecondsLeft = root.pomodoroLapDuration
+        root.rechargeTimer = !root.rechargeTimer
+    }
 
     Timer {
         id: pomodoroTimerInternal
@@ -53,6 +60,7 @@ Rectangle {
             if (root.pomodoroSecondsLeft > 0) {
                 root.pomodoroSecondsLeft--;
             } else {
+                root.rechargeTimer = true;
                 root.pomodoroRunning = false;
             }
         }
@@ -305,6 +313,7 @@ Rectangle {
                         }
                     }
                 }
+
                 ColumnLayout {
                     anchors.centerIn: parent
                     spacing: 30
