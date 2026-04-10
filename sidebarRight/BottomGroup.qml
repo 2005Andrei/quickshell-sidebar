@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Quickshell.Io
 
 Rectangle {
     id: root
@@ -44,6 +45,15 @@ Rectangle {
     property bool stopwatchRunning: false
     property bool showTimeDialog: false
 
+    Process {
+        id: endSound
+
+        function playSound() {
+            command = ["ffplay", "/home/andrei/Downloads/ElevenLabs_Alarm_from_a_kitchen_timer_when_baking_time_is_over,_sharp_and_clear.mp3", "-autoexit", "-nodisp"];
+            running = true;
+        }
+    }
+
     Timer {
         id: pomodoroTimerInternal
         interval: 1000
@@ -53,8 +63,9 @@ Rectangle {
             if (root.pomodoroSecondsLeft > 0) {
                 root.pomodoroSecondsLeft--;
             } else {
-                root.pomodoroSecondsLeft = root.pomodoroLapDuration;
                 root.pomodoroRunning = false;
+                endSound.playSound();
+                root.pomodoroSecondsLeft = root.pomodoroLapDuration;
             }
         }
     }
@@ -394,7 +405,7 @@ Rectangle {
                                     }
 
                                     validator: DoubleValidator {
-                                        bottom: 0.10
+                                        bottom: 0.01
                                         top: 300.00
                                         decimals: 2
                                     }
@@ -402,10 +413,12 @@ Rectangle {
                                     onEditingFinished: {
                                         parent.isEditing = false;
                                         let newTime = parseFloat(text);
+                                        let intTime = parseInt(text);
+                                        let seconds = newTime - intTime;
                                         if (!isNaN(newTime)) {
-                                            root.pomodoroSecondsLeft = newTime * 60;
-                                            root.focusTime = newTime * 60;
-                                            root.pomodoroLapDuration = newTime * 60;
+                                            root.pomodoroSecondsLeft = (newTime - seconds) * 60 + seconds * 100;
+                                            root.focusTime = (newTime - seconds) * 60 + seconds * 100;
+                                            root.pomodoroLapDuration = (newTime - seconds) * 60 + seconds * 100;
                                         }
                                     }
                                 }
