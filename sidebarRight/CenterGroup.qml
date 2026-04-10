@@ -158,7 +158,7 @@ Rectangle {
         }
 
         if (root.curr_list_uid === "") {
-            root.curr_list_uid = listsModel.get(0).list_uid;
+            root.curr_list_uid = listsModel.get(2).list_uid;
             control.currentIndex = 0;
         }
 
@@ -606,6 +606,7 @@ Rectangle {
 
             onActivated: {
                 root.curr_list_uid = control.currentValue;
+                tasksFile.reload();
                 loadTasks();
             }
 
