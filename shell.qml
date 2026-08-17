@@ -83,4 +83,58 @@ ShellRoot {
             }
         }
     }
+    PanelWindow {
+        id: linuxLogo
+        color: "transparent"
+        width: 300
+        height: 100
+
+        property bool isLogoVisisble: false
+        visible: isLogoVisisble
+        // opacity: linuxLogo.isLogoVisible ? 1.0 : 0.0
+
+
+        property var modelData
+        screen: modelData
+
+        anchors {
+            left: true
+            bottom: true
+        }
+
+        mask: Region {
+            item: content
+        }
+
+        IpcHandler {
+            target: "linuxLogo"
+            function toggleLogo(): void {
+                linuxLogo.isLogoVisisble = !linuxLogo.isLogoVisible;
+            }
+        }
+
+        Item {
+            // Layout.rightMargin: 10
+            // Layout.bottomMargin: 40
+
+            anchors.fill: parent
+
+            ColumnLayout {
+                id: content
+
+                Text {
+                    text: "Activate Linux"
+                    color: "white"
+                    font.pointSize: 22
+                }
+
+                Text {
+                    text: "Go to settings to activate Linux :)"
+                    color: "white"
+                    font.pointSize: 14
+                }
+            }
+        }
+    }
 }
+

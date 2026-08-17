@@ -12,21 +12,6 @@
 #define TASKS_FILE "/home/andrei/.local/share/tasks/tasks.json"
 #define DATA_FILE "/home/andrei/.local/share/errands/data.json"
 
-/*
- * the plan was to be able to modify errands tasks (an app to track tasks) from
- * my sidebar. I didn't know it has persistent memory - I found that out the
- * hard way after I'd already managed to load and delete tasks from the app, but
- * the app would undo the overwrites immediately
- *
- * just to not have spent this time figuring out the cJSON library for nothing,
- * I've changed the role of this code to be a utility that writes and
- * updates tasks as needed to a diffenrent folder
- *
- * some of these functions are left overs from me trying to reduce the JSON
- * objects from the errands data file, that I might integrate at some point
- * because I still think I'm going to want to view errands tasks from my sidebar
- * */
-
 void get_formatted_time(char *buffer, size_t size) {
     time_t t = time(NULL);
     struct tm *tm_info = localtime(&t);
