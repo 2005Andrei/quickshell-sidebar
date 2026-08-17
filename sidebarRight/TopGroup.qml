@@ -194,7 +194,7 @@ Rectangle {
                 property string timeLocal: "--:--:--"
                 property string timeNY: "--:--:--"
                 property string timeBangkok: "--:--:--"
-                property string timeLondon: "--:--:--"
+                property string timeCity: "--:--:--"
 
                 Process {
                     id: tzProcess
@@ -202,7 +202,7 @@ Rectangle {
                     command: [
                         "bash",
                         "-c",
-                        "while true; do echo \"$(date +'%H:%M:%S'),$(TZ='America/New_York' date +'%H:%M:%S'),$(TZ='Asia/Bangkok' date +'%H:%M:%S'),$(TZ='Europe/London' date +'%H:%M:%S')\"; sleep 1; done"
+                        "while true; do echo \"$(date +'%H:%M:%S'),$(TZ='America/New_York' date +'%H:%M:%S'),$(TZ='Asia/Bangkok' date +'%H:%M:%S'),$(TZ='Europe/Frankfurt' date +'%H:%M:%S')\"; sleep 1; done"
                     ]
 
                     stdout: SplitParser {
@@ -214,7 +214,7 @@ Rectangle {
                                 secondPage.timeLocal = times[0]
                                 secondPage.timeNY = times[1]
                                 secondPage.timeBangkok = times[2]
-                                secondPage.timeLondon = times[3]
+                                secondPage.timeCity = times[3]
                             }
                         }
                     }
@@ -265,8 +265,8 @@ Rectangle {
                             showDivider: true
                         }
                         ClockRow {
-                            city: "London"
-                            time: secondPage.timeLondon
+                            city: "Frankfurt"
+                            time: secondPage.timeCity
                             showDivider: false
                         }
                     }
