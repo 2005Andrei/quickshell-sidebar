@@ -46,7 +46,7 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
      
-            currentIndex: 1
+            currentIndex: 0
 
             Item {
                 id: weather
@@ -107,9 +107,9 @@ Rectangle {
                         }
                 }
 
-                Item {
-                    Layout.fillWidth: true
-                }
+                // Item {
+                //     Layout.fillWidth: true
+                // }
 
                 ColumnLayout {
                     spacing: 8

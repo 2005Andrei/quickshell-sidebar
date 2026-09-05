@@ -5,8 +5,73 @@ import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
 import "sidebarRight"
+import "countdown"
 
 ShellRoot {
+    PanelWindow {
+        id: countdown
+        color: "transparent"
+        implicitWidth: 210
+        implicitHeight: 200 
+        property bool countdownVisible: true
+        visible: countdownVisible || countdownAnimation.running
+
+        anchors {
+            top: true
+            left: true
+        }
+
+        
+        IpcHandler {
+            target: "countdown"
+            function toggle(): void {
+                countdown.countdownVisible = !countdown.countdownVisible;
+            }
+        }
+
+        Item {
+            Layout.leftMargin: 30
+            Layout.topMargin: 10
+
+            anchors.fill: parent
+
+            opacity: countdown.countdownVisible ? 1.0 : 0.0
+
+
+            Behavior on opacity {
+                NumberAnimation {
+                    id: countdownAnimation
+                    duration: 200
+                    easing.type: Easing.InOutQuad
+                }
+            }
+
+            Rectangle {
+                id: bgCount
+                color: "transparent"
+                radius: 10
+                anchors.fill: parent
+                implicitHeight: parent.height
+                implicitWidth: parent.width
+
+            }
+
+            ColumnLayout {
+                id: newCountdownContent
+                anchors.fill: parent
+                implicitHeight: parent.height
+                implicitWidth: parent.width
+
+                CountdownMain {
+                    Layout.alignment: Qt.AlignCenter
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                }
+            }
+        }
+    }
+
+
     PanelWindow {
         id: sidebarRight
 
@@ -28,6 +93,7 @@ ShellRoot {
                 sidebarRight.isVisible = !sidebarRight.isVisible;
             }
         }
+
 
         Item {
             Layout.rightMargin: 10
