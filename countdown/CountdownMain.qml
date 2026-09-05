@@ -26,6 +26,32 @@ Rectangle {
         }
     }
 
+    Timer {
+        interval: 300000 
+        running: true
+        repeat: true
+        triggeredOnStart: true 
+        onTriggered: {
+            let req = new XMLHttpRequest();
+            req.open("GET", "https://set-quote.vercel.app/api/quote");
+            req.onreadystatechange = function() {
+                if (req.readyState === XMLHttpRequest.DONE) {
+                    if (req.status === 200) {
+                        try {
+                            let data = JSON.parse(req.responseText);
+                            if (data.quote) {
+                                quote.text = data.quote + " - Elizabeth";
+                            }
+                        } catch(e) {
+                            console.log("Failed to parse quote JSON");
+                        }
+                    }
+                }
+            }
+            req.send();
+        }
+    }
+
     ColumnLayout {
         id: countdownRootLayout
         anchors.fill: parent
@@ -52,7 +78,7 @@ Rectangle {
             
             Text {
                 id: daysLeftText
-                text: "days left"
+                text: "days left til great happiness"
                 font.italic: true
                 font.pixelSize: 10
                 color: "cyan"

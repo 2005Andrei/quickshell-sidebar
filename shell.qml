@@ -13,7 +13,7 @@ ShellRoot {
         color: "transparent"
         implicitWidth: 210
         implicitHeight: 200 
-        property bool countdownVisible: true
+        property bool countdownVisible: false
         visible: countdownVisible || countdownAnimation.running
 
         anchors {
