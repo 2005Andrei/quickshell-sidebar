@@ -26,6 +26,13 @@ Rectangle {
         }
     }
 
+    FileView {
+        id: specialLink
+        path: "/home/andrei/.config/quickshell/countdown/link.txt"
+        blockLoading: true
+    }
+
+
     Timer {
         interval: 300000 
         running: true
@@ -33,7 +40,7 @@ Rectangle {
         triggeredOnStart: true 
         onTriggered: {
             let req = new XMLHttpRequest();
-            req.open("GET", "https://set-quote.vercel.app/api/quote");
+            req.open("GET", specialLink.text().trim());
             req.onreadystatechange = function() {
                 if (req.readyState === XMLHttpRequest.DONE) {
                     if (req.status === 200) {
@@ -43,7 +50,7 @@ Rectangle {
                                 quote.text = data.quote + " - Elizabeth";
                             }
                         } catch(e) {
-                            console.log("Failed to parse quote JSON");
+                            console.log("Failed to parse quote");
                         }
                     }
                 }
@@ -89,7 +96,7 @@ Rectangle {
 
         Text {
             id: quote
-            text: "Lorem ipsum Lorem ipsum Lorem"
+            text: "No internet connection."
             font.italic: true
             font.pixelSize: 12
             color: "cyan"

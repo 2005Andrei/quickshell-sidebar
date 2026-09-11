@@ -30,10 +30,12 @@ ShellRoot {
         }
 
         Item {
-            Layout.leftMargin: 30
-            Layout.topMargin: 10
+            // Layout.leftMargin: 30
+            // Layout.topMargin: 10
+            // Layout.bottomMargin: 10
 
             anchors.fill: parent
+            anchors.bottomMargin: 10
 
             opacity: countdown.countdownVisible ? 1.0 : 0.0
 
