@@ -16,6 +16,7 @@ Rectangle {
 
     property date theDate: new Date(2026, 11, 15)
     property int daysLeft: 0
+    property string currentQuote: ""
 
     Timer {
         interval: 100
@@ -32,6 +33,9 @@ Rectangle {
         blockLoading: true
     }
 
+    Process {
+        id: writeQuoteFile
+    }
 
     Timer {
         interval: 300000 
@@ -42,16 +46,19 @@ Rectangle {
             let req = new XMLHttpRequest();
             req.open("GET", specialLink.text().trim());
             req.onreadystatechange = function() {
-                if (req.readyState === XMLHttpRequest.DONE) {
-                    if (req.status === 200) {
-                        try {
-                            let data = JSON.parse(req.responseText);
-                            if (data.quote) {
-                                quote.text = data.quote + " - Elizabeth";
-                            }
-                        } catch(e) {
-                            console.log("Failed to parse quote");
+                if (req.readyState === XMLHttpRequest.DONE && req.status === 200) {
+                    try {
+                        let data = JSON.parse(req.responseText);
+                        if (data.quote && data.quote !== currentQuote) {
+                            currentQuote = data.quote;
+                            quote.text = currentQuote + " - Elizabeth";
+                            
+                            let safeQuote = currentQuote.replace(/'/g, "'\\''");
+                            writeQuoteFile.command = ["sh", "-c", "echo '" + safeQuote + "' > ~/.cache/fastfetch_quote.txt"];
+                            writeQuoteFile.running = true;
                         }
+                    } catch(e) {
+                        console.log("Failed to parse quote");
                     }
                 }
             }
